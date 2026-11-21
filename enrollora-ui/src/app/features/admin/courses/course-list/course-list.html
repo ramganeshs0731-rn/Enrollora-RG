@@ -1,4 +1,6 @@
+
 <div class="course-page">
+
   <!-- Page Header -->
   <div class="page-header">
     <div>
@@ -7,8 +9,24 @@
       <p>Manage courses, fees, capacity and availability.</p>
     </div>
 
-    <button class="btn-add"><span>+</span> Add New Course</button>
+    <button class="btn-add" (click)="openAddForm()">
+      <span>+</span> Add New Course
+    </button>
   </div>
+
+  <!-- Success Message -->
+  @if (successMessage()) {
+    <div class="success-alert">
+      ✓ {{ successMessage() }}
+    </div>
+  }
+
+  <!-- Error Message -->
+  @if (errorMessage() && !showForm()) {
+    <div class="error-alert">
+      ⚠ {{ errorMessage() }}
+    </div>
+  }
 
   <!-- Summary Cards -->
   <div class="summary-grid">
@@ -31,15 +49,17 @@
     <div class="summary-card blue">
       <div class="summary-icon">🪑</div>
       <div>
-        <span>Available Seats</span>
-        <h2>{{ courses().reduce((total, course) => total + course.availableSeats, 0) }}</h2>
+        <span>Available Seats (Page)</span>
+        <h2>
+          {{ courses().reduce((total, course) => total + course.availableSeats, 0) }}
+        </h2>
       </div>
     </div>
 
     <div class="summary-card green">
       <div class="summary-icon">✓</div>
       <div>
-        <span>Active Courses</span>
+        <span>Active Courses (Page)</span>
         <h2>{{ courses().filter((course) => course.isActive).length }}</h2>
       </div>
     </div>
@@ -47,13 +67,16 @@
 
   <!-- Course Table -->
   <div class="table-card">
+
     <div class="table-header">
       <div>
         <h2>All Courses</h2>
         <p>View and manage your available courses.</p>
       </div>
 
-      <span class="record-count"> {{ totalRecords() }} courses </span>
+      <span class="record-count">
+        {{ totalRecords() }} courses
+      </span>
     </div>
 
     <!-- Loading -->
@@ -65,7 +88,7 @@
     }
 
     <!-- Error -->
-    @else if (errorMessage()) {
+    @else if (errorMessage() && courses().length === 0) {
       <div class="state-message error-state">
         <span>⚠️</span>
         <p>{{ errorMessage() }}</p>
@@ -79,6 +102,10 @@
         <span>📚</span>
         <h3>No courses found</h3>
         <p>There are currently no courses to display.</p>
+
+        <button class="btn-add" (click)="openAddForm()">
+          + Create First Course
+        </button>
       </div>
     }
 
@@ -94,6 +121,7 @@
               <th>ENROLLMENT</th>
               <th>AVAILABLE SEATS</th>
               <th>STATUS</th>
+              <th>ACTIONS</th>
             </tr>
           </thead>
 
@@ -105,6 +133,7 @@
                     <div class="course-avatar">
                       {{ course.courseName.charAt(0).toUpperCase() }}
                     </div>
+
                     <div>
                       <strong>{{ course.courseName }}</strong>
                       <small>Course ID: #{{ course.courseId }}</small>
@@ -113,23 +142,26 @@
                 </td>
 
                 <td>
-                  <span class="duration">
-                    {{ course.duration }}
-                  </span>
+                  <span class="duration">{{ course.duration }}</span>
                 </td>
 
                 <td>
-                  <strong class="fees"> ₹{{ course.fees | number: '1.0-2' }} </strong>
+                  <strong class="fees">
+                    ₹{{ course.fees | number: '1.0-2' }}
+                  </strong>
                 </td>
 
                 <td>
                   <div class="enrollment-info">
-                    <strong> {{ course.enrolledCount }} / {{ course.capacity }} </strong>
+                    <strong>{{ course.enrolledCount }} / {{ course.capacity }}</strong>
+
                     <div class="progress-track">
                       <div
                         class="progress-fill"
                         [style.width.%]="
-                          course.capacity > 0 ? (course.enrolledCount / course.capacity) * 100 : 0
+                          course.capacity > 0
+                            ? (course.enrolledCount / course.capacity) * 100
+                            : 0
                         "
                       ></div>
                     </div>
@@ -156,6 +188,29 @@
                     {{ course.isActive ? 'Active' : 'Inactive' }}
                   </span>
                 </td>
+
+                <!-- Actions -->
+                <td>
+                  <div class="action-buttons">
+                    <button
+                      class="btn-edit"
+                      (click)="openEditForm(course)"
+                      title="Edit course"
+                    >
+                      ✏️ Edit
+                    </button>
+
+                    @if (course.isActive) {
+                      <button
+                        class="btn-deactivate"
+                        (click)="deactivateCourse(course)"
+                        title="Deactivate course"
+                      >
+                        ⛔
+                      </button>
+                    }
+                  </div>
+                </td>
               </tr>
             }
           </tbody>
@@ -172,13 +227,21 @@
         </span>
 
         <div class="pagination-actions">
-          <button class="page-btn" (click)="previousPage()" [disabled]="pageNumber() === 1">
+          <button
+            class="page-btn"
+            (click)="previousPage()"
+            [disabled]="pageNumber() === 1"
+          >
             ← Previous
           </button>
 
           <span class="current-page">{{ pageNumber() }}</span>
 
-          <button class="page-btn" (click)="nextPage()" [disabled]="pageNumber() >= totalPages()">
+          <button
+            class="page-btn"
+            (click)="nextPage()"
+            [disabled]="pageNumber() >= totalPages()"
+          >
             Next →
           </button>
         </div>
@@ -186,3 +249,139 @@
     }
   </div>
 </div>
+
+<!-- ADD / EDIT COURSE MODAL -->
+@if (showForm()) {
+  <div class="modal-backdrop" (click)="closeForm()">
+
+    <div class="course-modal" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">
+            {{ isEditMode() ? 'EDIT COURSE' : 'NEW COURSE' }}
+          </span>
+
+          <h2>{{ isEditMode() ? 'Update Course' : 'Add New Course' }}</h2>
+          <p>Enter the course details below.</p>
+        </div>
+
+        <button
+          class="modal-close"
+          (click)="closeForm()"
+          [disabled]="isSaving()"
+        >
+          ×
+        </button>
+      </div>
+
+      <!-- Modal Error -->
+      @if (errorMessage()) {
+        <div class="error-alert modal-error">
+          ⚠ {{ errorMessage() }}
+        </div>
+      }
+
+      <form (ngSubmit)="saveCourse()">
+
+        <!-- Course Name -->
+        <div class="form-group">
+          <label for="courseName">Course Name *</label>
+
+          <input
+            type="text"
+            id="courseName"
+            name="courseName"
+            [(ngModel)]="formData.courseName"
+            placeholder="e.g. Full Stack Development"
+            maxlength="150"
+            required
+          />
+        </div>
+
+        <!-- Duration -->
+        <div class="form-group">
+          <label for="duration">Duration *</label>
+
+          <input
+            type="text"
+            id="duration"
+            name="duration"
+            [(ngModel)]="formData.duration"
+            placeholder="e.g. 6 Months"
+            maxlength="80"
+            required
+          />
+        </div>
+
+        <!-- Fees -->
+        <div class="form-group">
+          <label for="fees">Course Fees (₹) *</label>
+
+          <input
+            type="number"
+            id="fees"
+            name="fees"
+            [(ngModel)]="formData.fees"
+            min="0"
+            step="0.01"
+            required
+          />
+        </div>
+
+        <!-- Capacity -->
+        <div class="form-group">
+          <label for="capacity">Maximum Students / Capacity *</label>
+
+          <input
+            type="number"
+            id="capacity"
+            name="capacity"
+            [(ngModel)]="formData.capacity"
+            min="1"
+            required
+          />
+        </div>
+
+        <!-- Status -->
+        <div class="form-group status-form-group">
+          <label for="isActive">Course Status</label>
+
+          <select
+            id="isActive"
+            name="isActive"
+            [(ngModel)]="formData.isActive"
+          >
+            <option [ngValue]="true">Active</option>
+            <option [ngValue]="false">Inactive</option>
+          </select>
+        </div>
+
+        <!-- Buttons -->
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn-cancel"
+            (click)="closeForm()"
+            [disabled]="isSaving()"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            class="btn-save"
+            [disabled]="isSaving()"
+          >
+            {{ isSaving()
+                ? 'Saving...'
+                : isEditMode()
+                  ? 'Update Course'
+                  : 'Create Course' }}
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+}
