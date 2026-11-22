@@ -95,8 +95,8 @@
                 </div>
                 <span
                   class="status-badge"
-                  [class.active]="enrollment.status === 1"
-                  [class.cancelled]="enrollment.status !== 1"
+                  [class.active]="isActiveEnrollment(enrollment.status)"
+                  [class.cancelled]="!isActiveEnrollment(enrollment.status)"
                 >
                   {{ statusLabel(enrollment.status) }}
                 </span>

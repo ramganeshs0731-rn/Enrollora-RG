@@ -36,6 +36,14 @@ export class Dashboard implements OnInit {
     this.loadDashboard();
   }
 
+  isActiveEnrollment(status: number | string): boolean {
+    return status === 0 || status === 'Active';
+  }
+
+  statusLabel(status: number | string): string {
+    return this.isActiveEnrollment(status) ? 'Active' : 'Cancelled';
+  }
+
   loadDashboard(): void {
     this.isLoading.set(true);
     this.courseError.set('');
@@ -91,8 +99,9 @@ export class Dashboard implements OnInit {
             }
           };
 
+          // EnrollmentStatus.Active = 0
           this.enrollmentService
-            .getMyEnrollments(1, 1, { status: 1 })
+            .getMyEnrollments(1, 1, { status: 0 })
             .subscribe({
               next: (activeResponse) => {
                 this.activeEnrollmentCount.set(activeResponse.totalRecords);
@@ -106,8 +115,9 @@ export class Dashboard implements OnInit {
               },
             });
 
+          // EnrollmentStatus.Cancelled = 1
           this.enrollmentService
-            .getMyEnrollments(1, 1, { status: 0 })
+            .getMyEnrollments(1, 1, { status: 1 })
             .subscribe({
               next: (cancelledResponse) => {
                 this.cancelledEnrollmentCount.set(cancelledResponse.totalRecords);
@@ -129,10 +139,6 @@ export class Dashboard implements OnInit {
           markComplete();
         },
       });
-  }
-
-  statusLabel(status: number): string {
-    return status === 1 ? 'Active' : 'Cancelled';
   }
 
   private getErrorMessage(error: HttpErrorResponse, fallback: string): string {
