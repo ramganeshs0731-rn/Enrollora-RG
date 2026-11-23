@@ -1,0 +1,187 @@
+<div class="cancellation-page">
+  <div class="page-header">
+    <div>
+      <span class="eyebrow">STUDENT REQUESTS</span>
+      <h1>Cancellation Requests</h1>
+      <p>Request enrollment cancellations and track review status.</p>
+    </div>
+
+    <button
+      type="button"
+      class="btn-primary"
+      (click)="openNewRequestModal()"
+      [disabled]="isLoadingEnrollments() || activeEnrollments().length === 0"
+    >
+      + Request Cancellation
+    </button>
+  </div>
+
+  <div class="toolbar-card">
+    <div class="filter-group">
+      <label for="studentStatusFilter">Status</label>
+      <select
+        id="studentStatusFilter"
+        [ngModel]="statusFilter()"
+        (ngModelChange)="onFilterChange($event)"
+      >
+        <option value="">All Statuses</option>
+        <option value="0">Pending</option>
+        <option value="1">Approved</option>
+        <option value="2">Rejected</option>
+      </select>
+    </div>
+
+    <span class="record-pill">{{ totalRecords() }} requests</span>
+  </div>
+
+  @if (isLoading()) {
+    <div class="state-card">
+      <div class="loader"></div>
+      <p>Loading your cancellation requests...</p>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="state-card error-state">
+      <span>⚠️</span>
+      <p>{{ errorMessage() }}</p>
+      <button type="button" class="btn-secondary" (click)="loadRequests()">Try Again</button>
+    </div>
+  } @else if (requests().length === 0) {
+    <div class="state-card">
+      <span class="empty-icon">📄</span>
+      <h3>No cancellation requests</h3>
+      <p>You haven't submitted any cancellation requests matching this filter.</p>
+    </div>
+  } @else {
+    <div class="table-card">
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Course</th>
+              <th>Reason</th>
+              <th>Requested On</th>
+              <th>Status</th>
+              <th>Admin Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (req of requests(); track req.cancellationRequestId) {
+              <tr>
+                <td>
+                  <strong>{{ req.courseName }}</strong>
+                  <small class="sub-text">Enrollment #{{ req.enrollmentId }}</small>
+                </td>
+                <td class="reason-cell">{{ req.reason }}</td>
+                <td>{{ req.requestedAt | date: 'dd MMM yyyy' }}</td>
+                <td>
+                  <span
+                    class="status-badge"
+                    [class.pending]="statusText(req.status) === 'Pending'"
+                    [class.approved]="statusText(req.status) === 'Approved'"
+                    [class.rejected]="statusText(req.status) === 'Rejected'"
+                  >
+                    {{ statusText(req.status) }}
+                  </span>
+                </td>
+                <td>
+                  @if (req.adminRemarks) {
+                    <span>{{ req.adminRemarks }}</span>
+                  } @else {
+                    <span class="muted">—</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <span>Page {{ pageNumber() }} of {{ totalPages() }} ({{ totalRecords() }} total)</span>
+        <div class="pagination-actions">
+          <button
+            type="button"
+            class="page-btn"
+            (click)="previousPage()"
+            [disabled]="pageNumber() === 1"
+          >
+            ← Previous
+          </button>
+          <button
+            type="button"
+            class="page-btn"
+            (click)="nextPage()"
+            [disabled]="pageNumber() >= totalPages()"
+          >
+            Next →
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (isModalOpen()) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <span class="eyebrow">NEW REQUEST</span>
+            <h3>Request Course Cancellation</h3>
+          </div>
+          <button type="button" class="btn-close" (click)="closeModal()" [disabled]="isSubmitting()">
+            ✕
+          </button>
+        </div>
+
+        <form class="modal-form" (ngSubmit)="submitRequest()">
+          @if (formError()) {
+            <div class="form-error">{{ formError() }}</div>
+          }
+
+          <div class="form-group">
+            <label for="enrollmentSelect">Active Enrollment</label>
+            <select
+              id="enrollmentSelect"
+              name="enrollmentSelect"
+              [ngModel]="selectedEnrollmentId()"
+              (ngModelChange)="selectedEnrollmentId.set($event)"
+            >
+              @for (enr of activeEnrollments(); track enr.enrollmentId) {
+                <option [ngValue]="enr.enrollmentId">
+                  {{ enr.courseName }} (Enrollment #{{ enr.enrollmentId }})
+                </option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="cancellationReason">Reason for Cancellation</label>
+            <textarea
+              id="cancellationReason"
+              name="cancellationReason"
+              rows="4"
+              maxlength="1000"
+              [(ngModel)]="reason"
+              placeholder="Explain why you want to cancel this enrollment..."
+              required
+            ></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button
+              type="button"
+              class="btn-secondary"
+              (click)="closeModal()"
+              [disabled]="isSubmitting()"
+            >
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary" [disabled]="isSubmitting()">
+              {{ isSubmitting() ? 'Submitting...' : 'Submit Request' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

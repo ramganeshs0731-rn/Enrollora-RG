@@ -23,6 +23,12 @@ export const routes: Routes = [
           import('./features/admin/dashboard/dashboard').then((m) => m.Dashboard),
       },
       {
+        path: 'cancellation-requests',
+        loadComponent: () =>
+        import('./features/admin/cancellation-requests/admin-cancellation-requests').then(
+        (m) => m.AdminCancellationRequests,),
+      },
+      {
         path: 'students',
         loadComponent: () =>
           import('./features/admin/students/student-list/student-list').then((m) => m.StudentList),
@@ -34,7 +40,6 @@ export const routes: Routes = [
             (m) => m.CourseListComponent,
           ),
       },
-
       {
         path: 'enrollments',
         loadComponent: () =>
@@ -62,6 +67,12 @@ export const routes: Routes = [
           import('./features/enrollments/student/available-courses/available-courses').then(
             (m) => m.AvailableCourses,
           ),
+      },
+      {
+        path: 'cancellation-requests',
+        loadComponent: () =>
+        import('./features/student/cancellation-requests/student-cancellation-requests').then(
+        (m) => m.StudentCancellationRequests,),
       },
       {
         path: 'enrollments',
