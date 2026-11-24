@@ -1,0 +1,115 @@
+<div class="profile-page">
+  <div class="page-header">
+    <div>
+      <span class="eyebrow">STUDENT ACCOUNT</span>
+      <h1>My Profile</h1>
+      <p>View your account details and update your academic profile.</p>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="state-card">
+      <div class="loader"></div>
+      <p>Loading profile...</p>
+    </div>
+  } @else if (!profile() && errorMessage()) {
+    <div class="alert error-alert">
+      {{ errorMessage() }}
+      <button class="retry-btn" (click)="loadProfile()">Retry</button>
+    </div>
+  } @else if (profile(); as current) {
+    <div class="profile-grid">
+      <section class="card summary-panel">
+        <div class="avatar">{{ current.name.charAt(0).toUpperCase() }}</div>
+        <h2>{{ current.name }}</h2>
+        <p class="email">{{ current.email }}</p>
+        <span class="badge">{{ statusLabel(current.status) }}</span>
+
+        <div class="meta-list">
+          <div>
+            <span>Student ID</span>
+            <strong>#{{ current.studentId }}</strong>
+          </div>
+          <div>
+            <span>Registered On</span>
+            <strong>{{ current.registeredAt | date: 'dd MMM yyyy' }}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="card form-panel">
+        <h2>Edit Profile</h2>
+
+        <form (ngSubmit)="onSave()" #profileForm="ngForm">
+          <div class="form-row">
+            <div class="field">
+              <label for="name">Full Name</label>
+              <input
+                id="name"
+                type="text"
+                name="name"
+                [(ngModel)]="formModel.name"
+                required
+                maxlength="120"
+              />
+            </div>
+
+            <div class="field">
+              <label for="department">Department</label>
+              <input
+                id="department"
+                type="text"
+                name="department"
+                [(ngModel)]="formModel.department"
+                required
+                maxlength="100"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="field">
+              <label for="age">Age</label>
+              <input
+                id="age"
+                type="number"
+                name="age"
+                [(ngModel)]="formModel.age"
+                required
+                min="17"
+                max="60"
+              />
+            </div>
+
+            <div class="field">
+              <label for="cgpa">CGPA</label>
+              <input
+                id="cgpa"
+                type="number"
+                name="cgpa"
+                [(ngModel)]="formModel.cgpa"
+                required
+                min="0"
+                max="10"
+                step="0.01"
+              />
+            </div>
+          </div>
+
+          @if (successMessage()) {
+            <div class="alert success-alert">{{ successMessage() }}</div>
+          }
+
+          @if (errorMessage()) {
+            <div class="alert error-alert">{{ errorMessage() }}</div>
+          }
+
+          <button type="submit" class="save-btn" [disabled]="profileForm.invalid || isSaving()">
+            {{ isSaving() ? 'Saving...' : 'Save Changes' }}
+          </button>
+        </form>
+      </section>
+    </div>
+  }
+</div>
+
